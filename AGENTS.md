@@ -14,7 +14,7 @@ js/maze.js -> js/game.js -> js/render.js -> js/main.js
 
 Each file attaches its API to `window` (no ES modules, no imports). Globals in use:
 
-- `maze.js`: `MAZE` (28×31 numeric grid, pristine — never mutated), `TUNNEL_ROW` (=14), `PACMAN_START` ({x:13,y:23}), `GHOST_STARTS` (array with `kind: 'hunter' | 'random'`).
+- `maze.js`: `MAZE` (28×31 numeric grid, pristine — never mutated), `TUNNEL_ROW` (=14), `PACMAN_START` ({x:13,y:23}), `GHOST_STARTS` (array with `kind: 'blinky' | 'pinky' | 'inky' | 'clyde'`), `PEN_EXIT`, `RELEASE_FRAMES`, `POWER_PELLETS` (the 4 corner cells).
 - `game.js`: `createGame()`, `update(game)`, `DIRS`.
 - `render.js`: `draw(ctx, game, frame)`. `TILE=20`, canvas is 560×620.
 - `main.js`: owns the `requestAnimationFrame` loop, keyboard input, and overlay/HUD. Orchestrates the others.
@@ -23,7 +23,7 @@ Each file attaches its API to `window` (no ES modules, no imports). Globals in u
 
 ## Tile encoding (maze.js)
 
-Cell values: `1`=wall, `2`=dot, `0`=walkable empty, `3`=pen door. Maze is authored as 31 readable strings of 28 chars and parsed via `parseTile`. Coordinates are cell `(x,y)` with origin top-left; `x∈[0,27]`, `y∈[0,30]`. Grid is symmetric about the vertical axis between cols 13 and 14.
+Cell values: `1`=wall, `2`=dot, `0`=walkable empty, `3`=pen door, `4`=power pellet (eaten like a dot: +50 pts and triggers the fright effect). Maze is authored as 31 readable strings of 28 chars and parsed via `parseTile`. Coordinates are cell `(x,y)` with origin top-left; `x∈[0,27]`, `y∈[0,30]`. Grid is symmetric about the vertical axis between cols 13 and 14.
 
 Wall rules (game.js `isWall`): Pacman and ghosts are both blocked by wall (`1`) AND pen door (`3`) — nobody can enter the pen; ghosts leave only via the release teleport. Tunnel wrap applies only on `TUNNEL_ROW` (row 14).
 
@@ -32,11 +32,12 @@ Wall rules (game.js `isWall`): Pacman and ghosts are both blocked by wall (`1`) 
 - `PACMAN_SPEED=0.125` (1/8 cell/frame), `GHOST_SPEED=0.1` (1/10 cell/frame). Actors move on fractional cell coords; turns/decisions happen only when `aligned` (within 1e-3 of an integer).
 - `nextDir` queues a turn; applied at the next alignment if `canMove`.
 - Ghosts never reverse (`OPPOSITE` filtered out) except in a dead-end (no other valid exit).
-- `hunter` ghosts pick the neighbor minimizing Manhattan distance to Pacman; `random` ghosts pick uniformly among valid choices. There is no pathfinding, no mode cycling (chase/scatter/frightened), and no pen-release logic.
+- Ghosts pick directions per `kind`: blinky chases Pacman directly (greedy Manhattan), pinky targets 4 cells ahead of Pacman, inky reflects through blinky, clyde picks uniformly. There is no pathfinding and no chase/scatter mode cycling.
+- Frightened mode: while `game.frightTimer > 0` (after eating a power pellet, 480 frames), released ghosts pick uniformly among valid choices and move at half speed (`GHOST_FRIGHT_SPEED=0.05`). A frightened ghost colliding with Pacman is eaten (+200/400/800/1600 pts doubling per ghost in the same effect) and teleported back to the pen to be released again with its original `RELEASE_FRAMES`. Collisions are harmless for 10 frames after eating a ghost (`graceFrames`).
 
 ## Game state
 
-`game.state ∈ {start, playing, won, lost}`. Start with `lives=3`; collision (within 0.5 cell) costs a life and resets positions. Win when `dotsRemaining===0`; each dot is 10 points.
+`game.state ∈ {start, playing, won, lost}`. Start with `lives=3`; collision (within 0.5 cell) costs a life and resets positions — unless the ghost is frightened (it is eaten instead) or `game.graceFrames > 0`. Win when `dotsRemaining===0` (power pellets count toward it); each dot is 10 points, each power pellet 50. Per-game state also tracks `game.frightTimer` (frames of fright left), `game.combo` (ghosts eaten in the current effect), and `game.graceFrames` (invulnerability after eating a ghost).
 
 ## Conventions
 
