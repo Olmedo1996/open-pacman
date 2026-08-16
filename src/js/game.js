@@ -42,7 +42,7 @@ function createGame() {
       dir: 'up',
       speed: GHOST_SPEED,
       kind: g.kind,
-      released: g.kind === 'blinky',
+      released: false, // todos arrancan dentro; blinky sale al instante (timer 0)
       releaseTimer: RELEASE_FRAMES[ g.kind ],
     } ) ),
   };
@@ -52,27 +52,24 @@ function aligned( v ) {
   return Math.abs( v - Math.round( v ) ) < 1e-3;
 }
 
-// Una celda es muro para el actor dado?
-//   pacman: bloqueado por pared (1) y puerta (3)
-//   ghost:  bloqueado solo por pared (1)
-function isWall( grid, x, y, actor ) {
+// Una celda es muro para cualquier actor.
+//   Pared (1) y puerta del pen (3) bloquean a pacman y fantasmas por igual.
+function isWall( grid, x, y ) {
   if ( y < 0 || y >= grid.length ) return true;
   if ( x < 0 || x >= grid[ 0 ].length ) return true;
   const v = grid[ y ][ x ];
-  if ( v === 1 ) return true;
-  if ( v === 3 && actor === 'pacman' ) return true;
-  return false;
+  return v === 1 || v === 3;
 }
 
-// Puede el actor avanzar desde (x,y) en la direccion dir?
-function canMove( grid, x, y, dir, actor ) {
+// Puede un actor avanzar desde (x,y) en la direccion dir?
+function canMove( grid, x, y, dir ) {
   const d = DIRS[ dir ];
   if ( !d ) return false;
   const tx = x + d.x;
   const ty = y + d.y;
   // Tunel: salir por un borde en la fila del tunel siempre es valido.
   if ( ty === TUNNEL_ROW && ( tx < 0 || tx >= grid[ 0 ].length ) ) return true;
-  return !isWall( grid, tx, ty, actor );
+  return !isWall( grid, tx, ty );
 }
 
 function wrapTunnel( a, width ) {
@@ -92,7 +89,7 @@ function movePacman( game ) {
     p.y = Math.round( p.y );
 
     // Aplicar giro pendiente si es posible.
-    if ( p.nextDir && canMove( grid, p.x, p.y, p.nextDir, 'pacman' ) ) {
+    if ( p.nextDir && canMove( grid, p.x, p.y, p.nextDir ) ) {
       p.dir = p.nextDir;
       p.nextDir = null;
     }
@@ -103,7 +100,7 @@ function movePacman( game ) {
       game.dotsRemaining--;
     }
     // Si no puede seguir, se detiene en la celda.
-    if ( !canMove( grid, p.x, p.y, p.dir, 'pacman' ) ) return;
+    if ( !canMove( grid, p.x, p.y, p.dir ) ) return;
   }
 
   const d = DIRS[ p.dir ];
@@ -120,7 +117,7 @@ function decideGhost( game, g ) {
   const p = game.pacman;
 
   const options = Object.keys( DIRS ).filter(
-    ( dir ) => dir !== OPPOSITE[ g.dir ] && canMove( grid, g.x, g.y, dir, 'ghost' )
+    ( dir ) => dir !== OPPOSITE[ g.dir ] && canMove( grid, g.x, g.y, dir )
   );
   // Sin salida (callejon): permitir el giro de 180.
   const choices = options.length ? options : [ '' + OPPOSITE[ g.dir ] ];
@@ -191,7 +188,7 @@ function moveGhost( game, g ) {
     g.x = Math.round( g.x );
     g.y = Math.round( g.y );
     decideGhost( game, g );
-    if ( !canMove( grid, g.x, g.y, g.dir, 'ghost' ) ) return;
+    if ( !canMove( grid, g.x, g.y, g.dir ) ) return;
   }
 
   const d = DIRS[ g.dir ];
@@ -211,7 +208,7 @@ function resetPositions( game ) {
     g.x = s.x;
     g.y = s.y;
     g.dir = 'up';
-    g.released = s.kind === 'blinky';
+    g.released = false;
     g.releaseTimer = RELEASE_FRAMES[ s.kind ];
   } );
 }

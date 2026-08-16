@@ -25,7 +25,7 @@ Each file attaches its API to `window` (no ES modules, no imports). Globals in u
 
 Cell values: `1`=wall, `2`=dot, `0`=walkable empty, `3`=pen door. Maze is authored as 31 readable strings of 28 chars and parsed via `parseTile`. Coordinates are cell `(x,y)` with origin top-left; `x∈[0,27]`, `y∈[0,30]`. Grid is symmetric about the vertical axis between cols 13 and 14.
 
-Wall rules (game.js `isWall`): Pacman is blocked by wall (`1`) AND pen door (`3`); ghosts are blocked only by wall (`1`) — ghosts can pass the door. Tunnel wrap applies only on `TUNNEL_ROW` (row 14).
+Wall rules (game.js `isWall`): Pacman and ghosts are both blocked by wall (`1`) AND pen door (`3`) — nobody can enter the pen; ghosts leave only via the release teleport. Tunnel wrap applies only on `TUNNEL_ROW` (row 14).
 
 ## Movement & AI quirks
 
