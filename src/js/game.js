@@ -42,6 +42,8 @@ function createGame() {
       dir: 'up',
       speed: GHOST_SPEED,
       kind: g.kind,
+      released: g.kind === 'blinky',
+      releaseTimer: RELEASE_FRAMES[ g.kind ],
     } ) ),
   };
 }
@@ -111,6 +113,9 @@ function movePacman( game ) {
 }
 
 function decideGhost( game, g ) {
+  // En espera dentro del pen: no decidir.
+  if ( !g.released ) return;
+
   const grid = game.grid;
   const p = game.pacman;
 
@@ -120,30 +125,67 @@ function decideGhost( game, g ) {
   // Sin salida (callejon): permitir el giro de 180.
   const choices = options.length ? options : [ '' + OPPOSITE[ g.dir ] ];
 
-  if ( g.kind === 'hunter' ) {
-    const px = Math.round( p.x );
-    const py = Math.round( p.y );
-    let best = choices[ 0 ];
-    let bestDist = Infinity;
-    for ( const dir of choices ) {
-      const d = DIRS[ dir ];
-      const nx = g.x + d.x;
-      const ny = g.y + d.y;
-      const dist = Math.abs( nx - px ) + Math.abs( ny - py );
-      if ( dist < bestDist ) {
-        bestDist = dist;
-        best = dir;
-      }
-    }
-    g.dir = best;
+  // Target greedy Manhattan segun el kind del fantasma.
+  let target;
+  if ( g.kind === 'blinky' ) {
+    target = { x: Math.round( p.x ), y: Math.round( p.y ) };
+  } else if ( g.kind === 'pinky' ) {
+    const d = DIRS[ p.dir ];
+    target = {
+      x: Math.round( p.x ) + d.x * 4,
+      y: Math.round( p.y ) + d.y * 4,
+    };
+    // Sin wrap del tunel en el target: topes dentro del borde.
+    target.x = Math.max( 0, Math.min( grid[ 0 ].length - 1, target.x ) );
+    target.y = Math.max( 0, Math.min( grid.length - 1, target.y ) );
+  } else if ( g.kind === 'inky' ) {
+    const d = DIRS[ p.dir ];
+    const frontal = {
+      x: Math.round( p.x ) + d.x * 2,
+      y: Math.round( p.y ) + d.y * 2,
+    };
+    const blinky = game.ghosts.find( ( gh ) => gh.kind === 'blinky' );
+    target = {
+      x: 2 * frontal.x - Math.round( blinky.x ),
+      y: 2 * frontal.y - Math.round( blinky.y ),
+    };
   } else {
+    // clyde: eleccion uniforme entre opciones validas.
     g.dir = choices[ Math.floor( Math.random() * choices.length ) ];
+    return;
   }
+
+  let best = choices[ 0 ];
+  let bestDist = Infinity;
+  for ( const dir of choices ) {
+    const d = DIRS[ dir ];
+    const nx = g.x + d.x;
+    const ny = g.y + d.y;
+    const dist = Math.abs( nx - target.x ) + Math.abs( ny - target.y );
+    if ( dist < bestDist ) {
+      bestDist = dist;
+      best = dir;
+    }
+  }
+  g.dir = best;
 }
 
 function moveGhost( game, g ) {
   const grid = game.grid;
   const width = grid[ 0 ].length;
+
+  // Liberacion retardada del pen.
+  if ( !g.released ) {
+    g.releaseTimer--;
+    if ( g.releaseTimer <= 0 ) {
+      g.x = PEN_EXIT.x;
+      g.y = PEN_EXIT.y;
+      g.dir = 'up';
+      g.released = true;
+      return; // no mover este frame
+    }
+    return; // sigue esperando dentro del pen
+  }
 
   if ( aligned( g.x ) && aligned( g.y ) ) {
     g.x = Math.round( g.x );
@@ -165,9 +207,12 @@ function resetPositions( game ) {
   p.dir = 'left';
   p.nextDir = null;
   game.ghosts.forEach( ( g, i ) => {
-    g.x = GHOST_STARTS[ i ].x;
-    g.y = GHOST_STARTS[ i ].y;
+    const s = GHOST_STARTS[ i ];
+    g.x = s.x;
+    g.y = s.y;
     g.dir = 'up';
+    g.released = s.kind === 'blinky';
+    g.releaseTimer = RELEASE_FRAMES[ s.kind ];
   } );
 }
 
