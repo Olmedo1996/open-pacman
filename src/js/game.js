@@ -147,6 +147,19 @@ function moveGhost( game, g ) {
   const grid = game.grid;
   const width = grid[ 0 ].length;
 
+  // Liberacion retardada del pen.
+  if ( !g.released ) {
+    g.releaseTimer--;
+    if ( g.releaseTimer <= 0 ) {
+      g.x = PEN_EXIT.x;
+      g.y = PEN_EXIT.y;
+      g.dir = 'up';
+      g.released = true;
+      return; // no mover este frame
+    }
+    return; // sigue esperando dentro del pen
+  }
+
   if ( aligned( g.x ) && aligned( g.y ) ) {
     g.x = Math.round( g.x );
     g.y = Math.round( g.y );
