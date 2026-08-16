@@ -5,6 +5,8 @@ const TILE = 20;
 const WALL_COLOR = '#2121ff';
 const DOOR_COLOR = '#ffb8ff';
 const DOT_COLOR = '#ffb897';
+const GHOST_FRIGHT_COLOR = '#2121ff';
+const GHOST_FLASH_COLOR = '#ffffff';
 
 function cellCenter( x, y ) {
   return { cx: x * TILE + TILE / 2, cy: y * TILE + TILE / 2 };
@@ -67,13 +69,15 @@ function drawDoor( ctx, grid ) {
 }
 
 function drawDots( ctx, grid ) {
-  ctx.fillStyle = DOT_COLOR;
   for ( let y = 0; y < grid.length; y++ ) {
     for ( let x = 0; x < grid[ 0 ].length; x++ ) {
-      if ( grid[ y ][ x ] !== 2 ) continue;
+      const v = grid[ y ][ x ];
+      // Dots pequenos (2) y power pellets grandes (4).
+      if ( v !== 2 && v !== 4 ) continue;
       const { cx, cy } = cellCenter( x, y );
+      ctx.fillStyle = DOT_COLOR;
       ctx.beginPath();
-      ctx.arc( cx, cy, 2.5, 0, Math.PI * 2 );
+      ctx.arc( cx, cy, v === 4 ? 7 : 2.5, 0, Math.PI * 2 );
       ctx.fill();
     }
   }
@@ -151,6 +155,15 @@ const GHOST_COLORS = {
   clyde:  '#ffb852', // naranja
 };
 
+// Color de un fantasma: azul (o blanco parpadeando) mientras es comestible.
+function ghostColor( game, g, frame ) {
+  if ( g.released && game.frightTimer > 0 ) {
+    const flash = game.frightTimer < 120 && Math.floor( frame / 10 ) % 2 === 0;
+    return flash ? GHOST_FLASH_COLOR : GHOST_FRIGHT_COLOR;
+  }
+  return GHOST_COLORS[ g.kind ] || '#ff0000';
+}
+
 function draw( ctx, game, frame ) {
   const grid = game.grid;
   const W = grid[ 0 ].length;
@@ -163,7 +176,7 @@ function draw( ctx, game, frame ) {
   drawDoor( ctx, grid );
   drawDots( ctx, grid );
   drawPacman( ctx, game.pacman, frame );
-  game.ghosts.forEach( ( g ) => drawGhost( ctx, g, GHOST_COLORS[ g.kind ] || '#ff0000' ) );
+  game.ghosts.forEach( ( g ) => drawGhost( ctx, g, ghostColor( game, g, frame ) ) );
   drawHUD( ctx, game, W );
 }
 
