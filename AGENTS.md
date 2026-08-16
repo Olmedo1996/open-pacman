@@ -33,7 +33,7 @@ Wall rules (game.js `isWall`): Pacman and ghosts are both blocked by wall (`1`) 
 - `nextDir` queues a turn; applied at the next alignment if `canMove`.
 - Ghosts never reverse (`OPPOSITE` filtered out) except in a dead-end (no other valid exit).
 - Ghosts pick directions per `kind`: blinky chases Pacman directly (greedy Manhattan), pinky targets 4 cells ahead of Pacman, inky reflects through blinky, clyde picks uniformly. There is no pathfinding and no chase/scatter mode cycling.
-- Frightened mode: while `game.frightTimer > 0` (after eating a power pellet, 480 frames), released ghosts pick uniformly among valid choices and move at half speed (`GHOST_FRIGHT_SPEED=0.05`). A frightened ghost colliding with Pacman is eaten (+200/400/800/1600 pts doubling per ghost in the same effect) and teleported back to the pen to be released again with its original `RELEASE_FRAMES`. Collisions are harmless for 10 frames after eating a ghost (`graceFrames`).
+- Frightened mode: while `game.frightTimer > 0` (after eating a power pellet, 480 frames), the ghosts that were already released at that moment get `frightened=true`; they pick uniformly among valid choices and move at half speed (`GHOST_FRIGHT_SPEED=0.05`). A frightened ghost colliding with Pacman is eaten (+200/400/800/1600 pts doubling per ghost in the same effect) and teleported back to the pen to be released again with its original `RELEASE_FRAMES` — a ghost re-released mid-effect is **not** frightened. Collisions are harmless for 10 frames after eating a ghost (`graceFrames`). Losing a life cancels the effect.
 
 ## Game state
 

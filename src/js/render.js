@@ -157,7 +157,7 @@ const GHOST_COLORS = {
 
 // Color de un fantasma: azul (o blanco parpadeando) mientras es comestible.
 function ghostColor( game, g, frame ) {
-  if ( g.released && game.frightTimer > 0 ) {
+  if ( g.released && g.frightened ) {
     const flash = game.frightTimer < 120 && Math.floor( frame / 10 ) % 2 === 0;
     return flash ? GHOST_FLASH_COLOR : GHOST_FRIGHT_COLOR;
   }

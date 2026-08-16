@@ -53,6 +53,7 @@ function createGame() {
       kind: g.kind,
       released: false, // todos arrancan dentro; blinky sale al instante (timer 0)
       releaseTimer: RELEASE_FRAMES[ g.kind ],
+      frightened: false, // comestible; solo los liberados al comer el pellet
     } ) ),
   };
 }
@@ -113,6 +114,10 @@ function movePacman( game ) {
         game.score += PELLET_POINTS;
         game.frightTimer = FRIGHT_FRAMES;
         game.combo = 0;
+        // Solo los fantasmas ya liberados se asustan; los del pen no.
+        game.ghosts.forEach( ( gh ) => {
+          if ( gh.released ) gh.frightened = true;
+        } );
       }
     }
     // Si no puede seguir, se detiene en la celda.
@@ -139,7 +144,7 @@ function decideGhost( game, g ) {
   const choices = options.length ? options : [ '' + OPPOSITE[ g.dir ] ];
 
   // Comestible: eleccion aleatoria entre opciones validas.
-  if ( game.frightTimer > 0 ) {
+  if ( g.frightened ) {
     g.dir = choices[ Math.floor( Math.random() * choices.length ) ];
     return;
   }
@@ -214,7 +219,7 @@ function moveGhost( game, g ) {
   }
 
   const d = DIRS[ g.dir ];
-  const speed = game.frightTimer > 0 ? GHOST_FRIGHT_SPEED : g.speed;
+  const speed = g.frightened ? GHOST_FRIGHT_SPEED : g.speed;
   g.x += d.x * speed;
   g.y += d.y * speed;
   wrapTunnel( g, width );
@@ -226,6 +231,10 @@ function resetPositions( game ) {
   p.y = PACMAN_START.y;
   p.dir = 'left';
   p.nextDir = null;
+  // Perder una vida cancela el efecto power pellet (clasico).
+  game.frightTimer = 0;
+  game.combo = 0;
+  game.graceFrames = 0;
   game.ghosts.forEach( ( g, i ) => {
     const s = GHOST_STARTS[ i ];
     g.x = s.x;
@@ -233,6 +242,7 @@ function resetPositions( game ) {
     g.dir = 'up';
     g.released = false;
     g.releaseTimer = RELEASE_FRAMES[ s.kind ];
+    g.frightened = false;
   } );
 }
 
@@ -241,7 +251,12 @@ function collides( a, b ) {
 }
 
 function update( game ) {
-  if ( game.frightTimer > 0 ) game.frightTimer--;
+  if ( game.frightTimer > 0 ) {
+    game.frightTimer--;
+    if ( game.frightTimer === 0 ) {
+      game.ghosts.forEach( ( gh ) => { gh.frightened = false; } );
+    }
+  }
   if ( game.graceFrames > 0 ) game.graceFrames--;
 
   movePacman( game );
@@ -251,7 +266,7 @@ function update( game ) {
     if ( !g.released || !collides( game.pacman, g ) ) continue;
 
     // Comestible: Pacman se lo come y vuelve al pen.
-    if ( game.frightTimer > 0 ) {
+    if ( g.frightened ) {
       game.score += GHOST_EAT_BASE * Math.pow( 2, game.combo );
       game.combo++;
       game.graceFrames = GRACE_FRAMES;
@@ -261,6 +276,7 @@ function update( game ) {
       g.dir = 'up';
       g.released = false;
       g.releaseTimer = RELEASE_FRAMES[ g.kind ];
+      g.frightened = false; // al relanzarse sale normal, aunque el efecto siga
       continue;
     }
 
