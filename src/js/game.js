@@ -42,6 +42,8 @@ function createGame() {
       dir: 'up',
       speed: GHOST_SPEED,
       kind: g.kind,
+      released: g.kind === 'blinky',
+      releaseTimer: RELEASE_FRAMES[ g.kind ],
     } ) ),
   };
 }

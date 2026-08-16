@@ -52,11 +52,24 @@ const MAZE = MAZE_STR.map( ( row ) => row.split( '' ).map( parseTile ) );
 const TUNNEL_ROW = 14;
 const PACMAN_START = { x: 13, y: 23 };
 const GHOST_STARTS = [
-  { x: 13, y: 14, kind: 'hunter' }, // dentro de la pen
-  { x: 14, y: 14, kind: 'random' }, // dentro de la pen
+  { x: 13, y: 11, kind: 'blinky' }, // afuera, listo para perseguir
+  { x: 13, y: 14, kind: 'pinky'  }, // dentro de la pen
+  { x: 11, y: 14, kind: 'inky'   }, // dentro de la pen
+  { x: 15, y: 14, kind: 'clyde'  }, // dentro de la pen
 ];
+const PEN_EXIT = { x: 13, y: 11 };
+
+// Retardos de liberacion en frames a 60fps (0/2/4/6 s)
+const RELEASE_FRAMES = {
+  blinky: 0,
+  pinky:  120,
+  inky:   240,
+  clyde:  360,
+};
 
 window.MAZE = MAZE;
 window.TUNNEL_ROW = TUNNEL_ROW;
 window.PACMAN_START = PACMAN_START;
 window.GHOST_STARTS = GHOST_STARTS;
+window.PEN_EXIT = PEN_EXIT;
+window.RELEASE_FRAMES = RELEASE_FRAMES;
