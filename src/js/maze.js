@@ -9,7 +9,7 @@ const MAZE_STR = [
   '############################', // 0  borde
   '#............##............#', // 1
   '#.####.#####.##.#####.####.#', // 2
-  '#.####.#####.##.#####.####.#', // 3
+  '#o####.#####.##.#####.####o#', // 3  power pellets (1,3) y (26,3)
   '#.####.#####.##.#####.####.#', // 4
   '#..........................#', // 5
   '#.####.##.########.##.####.#', // 6
@@ -29,7 +29,7 @@ const MAZE_STR = [
   '#............##............#', // 20
   '#.####.#####.##.#####.####.#', // 21
   '#.####.#####.##.#####.####.#', // 22
-  '#...##................##...#', // 23  fila inicio Pacman (13,23)
+  '#o..##................##..o#', // 23  power pellets (1,23) y (26,23)
   '###.##.##.########.##.##.###', // 24
   '###.##.##.########.##.##.###', // 25
   '#......##....##....##......#', // 26
@@ -43,6 +43,7 @@ function parseTile( ch ) {
   if ( ch === '#' ) return 1;
   if ( ch === '.' ) return 2;
   if ( ch === '-' ) return 3;
+  if ( ch === 'o' ) return 4; // power pellet
   return 0; // espacio = vacio transitable
 }
 
@@ -67,9 +68,18 @@ const RELEASE_FRAMES = {
   clyde:  360,
 };
 
+// Power pellets en las esquinas clasicas (celdas ya transitables como dots).
+const POWER_PELLETS = [
+  { x: 1,  y: 3  },
+  { x: 26, y: 3  },
+  { x: 1,  y: 23 },
+  { x: 26, y: 23 },
+];
+
 window.MAZE = MAZE;
 window.TUNNEL_ROW = TUNNEL_ROW;
 window.PACMAN_START = PACMAN_START;
 window.GHOST_STARTS = GHOST_STARTS;
 window.PEN_EXIT = PEN_EXIT;
 window.RELEASE_FRAMES = RELEASE_FRAMES;
+window.POWER_PELLETS = POWER_PELLETS;
