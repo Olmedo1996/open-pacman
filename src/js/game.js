@@ -42,7 +42,7 @@ function createGame() {
       dir: 'up',
       speed: GHOST_SPEED,
       kind: g.kind,
-      released: g.kind === 'blinky',
+      released: false, // todos arrancan dentro; blinky sale al instante (timer 0)
       releaseTimer: RELEASE_FRAMES[ g.kind ],
     } ) ),
   };
@@ -208,7 +208,7 @@ function resetPositions( game ) {
     g.x = s.x;
     g.y = s.y;
     g.dir = 'up';
-    g.released = s.kind === 'blinky';
+    g.released = false;
     g.releaseTimer = RELEASE_FRAMES[ s.kind ];
   } );
 }
